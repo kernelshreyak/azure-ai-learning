@@ -1,27 +1,27 @@
 import os
 import azure.cognitiveservices.speech as speechsdk
 
-# This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
-speech_config = speechsdk.SpeechConfig(subscription=os.environ.get('SPEECH_KEY'), region=os.environ.get('SPEECH_REGION'))
-audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
+# Creates an instance of a speech config with specified subscription key and service region.
+speech_key = os.getenv("SPEECH_KEY")
+service_region = os.getenv("SPEECH_REGION")
 
-# The neural multilingual voice can speak different languages based on the input text.
-speech_config.speech_synthesis_voice_name='en-US-AvaMultilingualNeural'
-
-speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-
-# Get text from the console and synthesize to the default speaker.
+speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
+# Note: the voice setting will not overwrite the voice element in input SSML.
+# speech_config.speech_synthesis_voice_name = "en-US-AvaNeural"
+speech_config.speech_synthesis_voice_name = "en-US-AndrewNeural"
 print("Enter some text that you want to speak >")
 text = input()
 
-speech_synthesis_result = speech_synthesizer.speak_text_async(text).get()
+# use the default speaker as audio output.
+speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
 
-if speech_synthesis_result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+result = speech_synthesizer.speak_text_async(text).get()
+# Check result
+if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
     print("Speech synthesized for text [{}]".format(text))
-elif speech_synthesis_result.reason == speechsdk.ResultReason.Canceled:
-    cancellation_details = speech_synthesis_result.cancellation_details
+elif result.reason == speechsdk.ResultReason.Canceled:
+    cancellation_details = result.cancellation_details
     print("Speech synthesis canceled: {}".format(cancellation_details.reason))
     if cancellation_details.reason == speechsdk.CancellationReason.Error:
-        if cancellation_details.error_details:
-            print("Error details: {}".format(cancellation_details.error_details))
-            print("Did you set the speech resource key and region values?")
+        print("Error details: {}".format(cancellation_details.error_details))
+
